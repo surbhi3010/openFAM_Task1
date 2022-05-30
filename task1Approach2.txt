@@ -1,0 +1,35 @@
+from schema import Or, Regex, Schema, SchemaError
+import yaml
+ip4_regex = r"^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$"
+path_regex = r"^(.*/)([^/]*)$"
+config_schema = Schema({
+    "servers": [
+        {"memory_path": Or("volatile", "persistent") ,
+         "fam_path": Regex(path_regex),
+         "rpc_interface": Regex(ip4_regex), 
+         "port": Or(8789, 8788) ,
+         "lifabric_port": Or(7500, 7501),
+         "if_device": Or("eth0", "eth1")}
+        ]
+    })
+conf_as_yaml = """
+servers:
+    - memory_path: volatile
+      fam_path: /dev/shm/vol/
+      rpc_interface: 127.0.0.1
+      port: 8789
+      lifabric_port: 7500
+      if_device: eth0
+    - memory_path: persistent
+      fam_path: /dev/shm/per/
+      rpc_interface: 127.0.0.1
+      port: 8788
+      lifabric_port: 7501
+      if_device: eth1
+"""
+configuration = yaml.safe_load(conf_as_yaml)
+try:
+    config_schema.validate(configuration)
+    print("Configuration is valid.")
+except SchemaError as se:
+    raise se
